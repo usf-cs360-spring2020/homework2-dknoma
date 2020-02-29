@@ -15,7 +15,7 @@
 const width = 960;
 const height = 500;
 const padding = 20;
-const size = (width - (4 + 1) * padding) / 4 + padding;
+const size = 230;
 
 const columns = {
   NAME: 'name',
@@ -131,10 +131,17 @@ function drawCells(data) {
   svg.attr('width', size * cellN + padding + margin.left + margin.right)
      .attr('height', size * cellN + padding + margin.top + margin.bottom);
 
-  plot.attr('transform', 'translate(' + (padding * 3) + ', ' + padding / 2 + ')');
+  plot.attr('transform', 'translate(' + (padding * 3) + ', ' + (padding / 2 + 10) + ')');
 
   const group = plot.append('g')
                     .attr('id', 'cells');
+
+  group.append('g')
+       .append('text')
+       .attr('x', 0)
+       .attr('y', 0)
+       .attr('font-size', '24px')
+       .text("Average Earnings of College Students and Their Parents for Each College in the Bay Area");
 
   group.selectAll('.x.axis')
                 .data(rev)
