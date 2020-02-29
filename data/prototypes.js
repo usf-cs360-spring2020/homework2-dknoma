@@ -14,46 +14,16 @@
 // set svg size and plot margins
 const width = 960;
 const height = 500;
-
-const month = {
-  JAN: { str: 'January', id: 1 },
-  FEB: { str: 'February', id: 2 },
-  MAR: { str: 'March', id: 3 },
-  APR: { str: 'April', id: 4 },
-  MAY: { str: 'May', id: 5 },
-  JUN: { str: 'June', id: 6 },
-  JUL: { str: 'July', id: 7 },
-  AUG: { str: 'August', id: 8 },
-  SEP: { str: 'September', id: 9 },
-  OCT: { str: 'October', id: 10 },
-  NOV: { str: 'November', id: 11 },
-  DEC: { str: 'December', id: 12 },
-};
-
-const validMonths = [
-  month.JAN.str,
-  month.FEB.str,
-  month.MAR.str,
-  month.APR.str,
-  month.MAY.str,
-  month.JUN.str,
-  month.JUL.str,
-  month.AUG.str,
-  month.SEP.str,
-];
+const padding = 20;
+const size = 230;
 
 const columns = {
-  PASSENGER_COUNT: 'Passenger Count',
-  ACTIVITY_PERIOD: 'Activity Period',
-  GEO_SUMMARY: 'GEO Summary'
+  STATE: 'state',
+  COUNT: 'count',
+  K_MEAN: 'k_mean',
+  PAR_MEAN: 'par_mean',
+  FEMALE: 'female'
 };
-
-const stackLayers = {
-  domestic: 'Domestic',
-  international: 'International'
-};
-
-const maxHeight = 6000000;
 
 const margin = {
   top: 30,
@@ -62,8 +32,24 @@ const margin = {
   right: 15
 };
 
+const x = d3.scaleLinear()
+          .range([padding / 2, size - padding / 2]);
+
+const y = d3.scaleLinear()
+          .range([size - padding / 2, padding / 2]);
+
+var xAxis = d3.axisBottom()
+              .scale(x)
+              .ticks(4);
+
+var yAxis = d3.axisLeft()
+              .scale(y)
+              .ticks(4);
+
+const color = d3.scaleOrdinal(d3.schemeCategory10);
+
 // select svg
-const svg = d3.select('#bar');
+const svg = d3.select('#scatter-plot');
 console.assert(svg.size() === 1);
 
 // set svg size
@@ -71,7 +57,8 @@ svg.attr('width', width);
 svg.attr('height', height);
 
 // add plot region
-const plot = svg.append('g').attr('id', 'plot');
+const plot = svg.append('g')
+                .attr('id', 'plot');
 
 // this is just so we can see the transform of the plot
 // comment out for final version
@@ -92,30 +79,78 @@ const scales = {
 
 // we are going to hardcode the domains, so we can setup our scales now
 // that is one benefit of prototyping!
-scales.x.range([0, width - margin.left - margin.right])
-        .domain(validMonths)
-        .paddingInner(0.05);
-
-scales.y.range([height - margin.top - margin.bottom, 0])
-        .domain([0, maxHeight]);
-
-const layers = [stackLayers.domestic, stackLayers.international];
-
-let blue = '#4E79A7';
-let orange = '#F28E2B';
-
-let stackColor = d3.scaleOrdinal()
-                   .domain(layers)
-                   .range([blue, orange]);
-
-// since we do not need the data for our domains, we can draw our axis/legends right away
-drawAxis();
-drawTitles();
-drawColorLegend();
+// scales.x.range([0, width - margin.left - margin.right])
+//         .domain(validMonths)
+//         .paddingInner(0.05);
+//
+// scales.y.range([height - margin.top - margin.bottom, 0])
+//         .domain([0, maxHeight]);
 
 // load data and trigger draw
-d3.csv('hw/1/Air_Traffic_Passenger_Statistics_1.csv', convert)
+d3.csv('mrc_table2.csv', wrangle)
   .then(draw);
+
+// since we do not need the data for our domains, we can draw our axis/legends right away
+// drawAxis();
+// drawTitles();
+// drawColorLegend();
+let states = {};
+/*
+ * converts values as necessary
+ */
+function wrangle(row) {
+  let wrangled = {};
+
+  let state = row[columns.STATE];
+  // let count = row[columns.COUNT];
+  // let kMean = row[columns.K_MEAN];
+  // let pMean = row[columns.PAR_MEAN];
+  // let female = row[columns.FEMALE];
+
+  if(state !== "" && state !== undefined) {
+    console.log("state = \"%s\"", state);
+    // wrangled = {
+    //   [columns.STATE]: state,
+    //   [columns.COUNT]: parseInt(row[columns.COUNT]),
+    //   [columns.K_MEAN]: parseFloat(row[columns.K_MEAN]),
+    //   [columns.PAR_MEAN]: parseFloat(row[columns.PAR_MEAN]),
+    //   [columns.FEMALE]: parseFloat(row[columns.FEMALE]),
+    // };
+    // if (!(state in states)) {
+    //   wrangled = {
+    //     [columns.COUNT]: parseInt(row[columns.COUNT]),
+    //     [columns.K_MEAN]: parseFloat(row[columns.K_MEAN]),
+    //     [columns.PAR_MEAN]: parseFloat(row[columns.PAR_MEAN]),
+    //     [columns.FEMALE]: parseFloat(row[columns.FEMALE]),
+    //   };
+    // } else {
+    //   let existingState = states[state];
+    //   existingState[columns.COUNT] = (existingState[columns.COUNT] + parseInt(row[columns.COUNT])) / 2;
+    //   existingState[columns.K_MEAN] = (existingState[columns.K_MEAN] + parseFloat(row[columns.K_MEAN])) / 2;
+    //   existingState[columns.PAR_MEAN] = (existingState[columns.PAR_MEAN] + parseFloat(row[columns.PAR_MEAN])) / 2;
+    //   existingState[columns.FEMALE] = (existingState[columns.FEMALE] + parseFloat(row[columns.FEMALE])) / 2;
+    // }
+    if (!(state in states)) {
+      states[state] = {
+        [columns.STATE]: state,
+        [columns.COUNT]: parseInt(row[columns.COUNT]),
+        [columns.K_MEAN]: parseFloat(row[columns.K_MEAN]),
+        [columns.PAR_MEAN]: parseFloat(row[columns.PAR_MEAN]),
+        [columns.FEMALE]: parseFloat(row[columns.FEMALE]),
+      };
+    } else {
+      let existingState = states[state];
+      existingState[columns.COUNT] = (existingState[columns.COUNT] + parseInt(row[columns.COUNT])) / 2;
+      existingState[columns.K_MEAN] = (existingState[columns.K_MEAN] + parseFloat(row[columns.K_MEAN])) / 2;
+      existingState[columns.PAR_MEAN] = (existingState[columns.PAR_MEAN] + parseFloat(row[columns.PAR_MEAN])) / 2;
+      existingState[columns.FEMALE] = (existingState[columns.FEMALE] + parseFloat(row[columns.FEMALE])) / 2;
+    }
+  }
+
+  // console.log(states);
+
+  return wrangled;
+}
 
 /*
   {
@@ -127,20 +162,28 @@ d3.csv('hw/1/Air_Traffic_Passenger_Statistics_1.csv', convert)
     }
   }
  */
-function draw(data) {
+function draw() {
+  let data = Object.values(states);
   console.log("data");
   console.log(data);
-  console.log('loaded:', data.length, data[0]);
+  // console.log('loaded:', data.length, data[0]);
+  console.log('states:', states, states[0]);
+
+  // data.reduce((d, e) => {
+  //   console.log("d : e");
+  //   console.log(d);
+  //   console.log(e);
+  // });
 
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions
-  let internationalData = data.filter(row => row[columns.GEO_SUMMARY] === 'International');
-  let domesticData = data.filter(row => row[columns.GEO_SUMMARY] === 'Domestic');
-  console.log('filter - internationalData:', internationalData.length, internationalData[0]);
-  console.log('filter - domesticData:', domesticData.length, domesticData[0]);
+  // let internationalData = data.filter(row => row[columns.GEO_SUMMARY] === 'International');
+  // let domesticData = data.filter(row => row[columns.GEO_SUMMARY] === 'Domestic');
+  // console.log('filter - internationalData:', internationalData.length, internationalData[0]);
+  // console.log('filter - domesticData:', domesticData.length, domesticData[0]);
 
 
-  drawBars(domesticData, internationalData);
-  drawLabels(data);
+  // drawBars(domesticData, internationalData);
+  // drawLabels(data);
 }
 
 /*
@@ -250,12 +293,12 @@ function drawLabels(data) {
 
   // maybe we also want to make it more clear which circle is associated
   // with the label above it---we will work with update selection here!
-  plot.select('#bar')
-    .selectAll('rect')
-    .data(data)
-    .filter(d => d.label)
-    .style('stroke', 'black')
-    .style('stroke-width', 1);
+  // plot.select('#bar')
+  //   .selectAll('rect')
+  //   .data(data)
+  //   .filter(d => d.label)
+  //   .style('stroke', 'black')
+  //   .style('stroke-width', 1);
 }
 
 /*
@@ -330,63 +373,6 @@ function drawAxis() {
   // shift y axis to correct location
   yGroup.attr('transform', translate(margin.left, margin.top))
   yGroup.call(yAxis);
-}
-
-/*
- * converts values as necessary
- */
-function convert(row) {
-  let converted = {};
-
-  converted[columns.PASSENGER_COUNT] = parseInt(row[columns.PASSENGER_COUNT]);
-  converted[columns.GEO_SUMMARY] = row[columns.GEO_SUMMARY];
-
-  let activityPeriod = row[columns.ACTIVITY_PERIOD];
-  let len = activityPeriod.length;
-
-  let res;
-  switch(activityPeriod.substring(len-2, len)) {
-    case '01':
-      res = month.JAN;
-      break;
-    case '02':
-      res = month.FEB;
-      break;
-    case '03':
-      res = month.MAR;
-      break;
-    case '04':
-      res = month.APR;
-      break;
-    case '05':
-      res = month.MAY;
-      break;
-    case '06':
-      res = month.JUN;
-      break;
-    case '07':
-      res = month.JUL;
-      break;
-    case '08':
-      res = month.AUG;
-      break;
-    case '09':
-      res = month.SEP;
-      break;
-    case '10':
-      res = month.OCT;
-      break;
-    case '11':
-      res = month.NOV;
-      break;
-    case '12':
-      res = month.DEC;
-      break;
-  }
-
-  converted[columns.ACTIVITY_PERIOD] = res;
-
-  return converted;
 }
 
 /*
