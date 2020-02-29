@@ -136,31 +136,41 @@ function drawCells(data) {
   const group = plot.append('g')
                     .attr('id', 'cells');
 
-  group.selectAll('.x.axis')
-       .data(measures)
-       .enter()
-       .append('g')
-       .attr('class', 'x axis')
-       .attr('transform', (d, i) => 'translate(' + (cellN - i - 1) * size + ', 0)')
-       .each(function(d) {
-         x.domain(domainByMeasures[d]);
-         d3.select(this)
-           .call(xAxis);
-       });
+  let xg = group.selectAll('.x.axis')
+                .data(measures)
+                .enter()
+                .append('g')
+                .attr('class', 'x axis')
+                .attr('transform', (d, i) => 'translate(' + (cellN - i - 1) * size + ', 0)')
+                .each(function(d) {
+                  x.domain(domainByMeasures[d]);
+                  d3.select(this)
+                    .call(xAxis);
+                });
 
-  group.selectAll('.y.axis')
-       .data(measures)
-       .enter()
-       .append('g')
-       .attr('class', 'y axis')
-       .attr('transform', (d, i) => 'translate(0,' +  i * size + ')')
-       .each(function(d) {
-         y.domain(domainByMeasures[d]);
-         d3.select(this)
-           .call(yAxis);
-       });
+  xg.append('g')
+    .append('text')
+    .attr('x', size)
+    .attr('y', size)
+    .text(d => {
+      console.log(d);
+      return d
+    });
 
-  let cell = svg.selectAll('.cell')
+
+  let yg = group.selectAll('.y.axis')
+                .data(measures)
+                .enter()
+                .append('g')
+                .attr('class', 'y axis')
+                .attr('transform', (d, i) => 'translate(0,' +  i * size + ')')
+                .each(function(d) {
+                  y.domain(domainByMeasures[d]);
+                  d3.select(this)
+                    .call(yAxis);
+                });
+
+  let cell = plot.selectAll('.cell')
                 .data(cross(rev, measures))
                 .enter()
                 .append('g')
@@ -169,7 +179,7 @@ function drawCells(data) {
                 .each(doPlot);
 
   cell.filter(d => {
-        console.log(d);
+        // console.log(d);
         return d.x === d.y
       })
       .append('text')
