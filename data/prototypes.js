@@ -22,7 +22,8 @@ const columns = {
   COUNT: 'count',
   K_MEAN: 'k_mean',
   PAR_MEAN: 'par_mean',
-  FEMALE: 'female'
+  FEMALE: 'female',
+  TYPE: 'type',
 };
 
 const margin = {
@@ -87,93 +88,41 @@ const scales = {
 //         .domain([0, maxHeight]);
 
 // load data and trigger draw
-d3.csv('mrc_table2.csv', wrangle)
+d3.csv('mrc_table2_filtered.csv', convert)
   .then(draw);
 
 // since we do not need the data for our domains, we can draw our axis/legends right away
 // drawAxis();
 // drawTitles();
 // drawColorLegend();
-let states = {};
+
 /*
  * converts values as necessary
  */
-function wrangle(row) {
-  let wrangled = {};
+function convert(row) {
+  let convert = {};
 
   let state = row[columns.STATE];
-  // let count = row[columns.COUNT];
-  // let kMean = row[columns.K_MEAN];
-  // let pMean = row[columns.PAR_MEAN];
-  // let female = row[columns.FEMALE];
+  let count = row[columns.COUNT];
+  let kMean = row[columns.K_MEAN];
+  let pMean = row[columns.PAR_MEAN];
+  let female = row[columns.FEMALE];
+  let type = row[columns.TYPE];
 
-  if(state !== "" && state !== undefined) {
-    console.log("state = \"%s\"", state);
-    // wrangled = {
-    //   [columns.STATE]: state,
-    //   [columns.COUNT]: parseInt(row[columns.COUNT]),
-    //   [columns.K_MEAN]: parseFloat(row[columns.K_MEAN]),
-    //   [columns.PAR_MEAN]: parseFloat(row[columns.PAR_MEAN]),
-    //   [columns.FEMALE]: parseFloat(row[columns.FEMALE]),
-    // };
-    // if (!(state in states)) {
-    //   wrangled = {
-    //     [columns.COUNT]: parseInt(row[columns.COUNT]),
-    //     [columns.K_MEAN]: parseFloat(row[columns.K_MEAN]),
-    //     [columns.PAR_MEAN]: parseFloat(row[columns.PAR_MEAN]),
-    //     [columns.FEMALE]: parseFloat(row[columns.FEMALE]),
-    //   };
-    // } else {
-    //   let existingState = states[state];
-    //   existingState[columns.COUNT] = (existingState[columns.COUNT] + parseInt(row[columns.COUNT])) / 2;
-    //   existingState[columns.K_MEAN] = (existingState[columns.K_MEAN] + parseFloat(row[columns.K_MEAN])) / 2;
-    //   existingState[columns.PAR_MEAN] = (existingState[columns.PAR_MEAN] + parseFloat(row[columns.PAR_MEAN])) / 2;
-    //   existingState[columns.FEMALE] = (existingState[columns.FEMALE] + parseFloat(row[columns.FEMALE])) / 2;
-    // }
-    if (!(state in states)) {
-      states[state] = {
-        [columns.STATE]: state,
-        [columns.COUNT]: parseInt(row[columns.COUNT]),
-        [columns.K_MEAN]: parseFloat(row[columns.K_MEAN]),
-        [columns.PAR_MEAN]: parseFloat(row[columns.PAR_MEAN]),
-        [columns.FEMALE]: parseFloat(row[columns.FEMALE]),
-      };
-    } else {
-      let existingState = states[state];
-      existingState[columns.COUNT] = (existingState[columns.COUNT] + parseInt(row[columns.COUNT])) / 2;
-      existingState[columns.K_MEAN] = (existingState[columns.K_MEAN] + parseFloat(row[columns.K_MEAN])) / 2;
-      existingState[columns.PAR_MEAN] = (existingState[columns.PAR_MEAN] + parseFloat(row[columns.PAR_MEAN])) / 2;
-      existingState[columns.FEMALE] = (existingState[columns.FEMALE] + parseFloat(row[columns.FEMALE])) / 2;
-    }
-  }
+  convert[columns.STATE] = state;
+  convert[columns.TYPE] = parseInt(type);
+  convert[columns.COUNT] = parseInt(count);
+  convert[columns.K_MEAN] = parseFloat(kMean);
+  convert[columns.PAR_MEAN] = parseFloat(pMean);
+  convert[columns.FEMALE] = parseFloat(female);
 
-  // console.log(states);
-
-  return wrangled;
+  return convert;
 }
 
-/*
-  {
-    data:
-    {
-      Activity Period: []
-      GEO Summary: []
-      Passenger Count: []
-    }
-  }
- */
-function draw() {
-  let data = Object.values(states);
+function draw(data) {
   console.log("data");
   console.log(data);
-  // console.log('loaded:', data.length, data[0]);
-  console.log('states:', states, states[0]);
-
-  // data.reduce((d, e) => {
-  //   console.log("d : e");
-  //   console.log(d);
-  //   console.log(e);
-  // });
+  console.log('loaded:', data.length, data[0]);
 
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions
   // let internationalData = data.filter(row => row[columns.GEO_SUMMARY] === 'International');
@@ -183,7 +132,7 @@ function draw() {
 
 
   // drawBars(domesticData, internationalData);
-  // drawLabels(data);
+  drawLabels(data);
 }
 
 /*
