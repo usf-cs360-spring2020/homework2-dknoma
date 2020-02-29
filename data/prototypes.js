@@ -217,10 +217,10 @@ function drawCells(data) {
     cell.selectAll("circle")
         .data(data)
         .enter().append("circle")
-        .attr("cx", function(d) { return x(d[p.x]); })
-        .attr("cy", function(d) { return y(d[p.y]); })
+        .attr("cx", d => x(d[p.x]))
+        .attr("cy", d => y(d[p.y]))
         .attr("r", 4)
-        .style("fill", function(d) { return color(d.species); });
+        .style("fill", d => color(d.type));
   }
 }
 
