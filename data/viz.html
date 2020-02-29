@@ -9,6 +9,52 @@
         <!-- Load Bulma from CDN (consider saving it to repository instead) -->
         <!-- https://bulma.io/ -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+<!--        <link rel="stylesheet" type="text/css" href="/data/style.css">-->
+        <style>
+            svg {
+                font: 10px sans-serif;
+                padding: 10px;
+            }
+
+            .axis,
+            .frame {
+                shape-rendering: crispEdges;
+            }
+
+            .axis line {
+                stroke: #ddd;
+            }
+
+            .axis path {
+                display: none;
+            }
+
+            .cell text {
+                font-weight: bold;
+                text-transform: capitalize;
+                fill: black;
+            }
+
+            .frame {
+                fill: none;
+                stroke: #aaa;
+            }
+
+            circle {
+                fill-opacity: .7;
+            }
+
+            circle.hidden {
+                fill: #ccc !important;
+            }
+
+            .extent {
+                fill: #000;
+                fill-opacity: .125;
+                stroke: #fff;
+            }
+
+        </style>
 
         <!-- Load Font Awesome 5 (free) icons -->
         <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>

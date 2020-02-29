@@ -26,6 +26,8 @@ const columns = {
   TYPE: 'type',
 };
 
+const types = [1, 2, 3];
+
 const margin = {
   top: 30,
   bottom: 35,
@@ -47,7 +49,9 @@ const yAxis = d3.axisLeft()
                 .scale(y)
                 .ticks(4);
 
-const color = d3.scaleOrdinal(d3.schemeCategory10);
+const color = d3.scaleOrdinal()
+                .domain(types)
+                .range(d3.schemeCategory10);
 
 // select svg
 const svg = d3.select('#scatter-plot');
