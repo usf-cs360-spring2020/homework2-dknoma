@@ -61,38 +61,9 @@ console.assert(svg.size() === 1);
 const plot = svg.append('g')
                 .attr('id', 'plot');
 
-// this is just so we can see the transform of the plot
-// comment out for final version
-// plot.append('rect').attr('width', 10).attr('height', 10);
-
-// transform region by margin
-// plot.attr('transform', translate(margin.left, margin.top));
-
-/*
- * setup scales with ranges and the domains we set from tableau
- * defined globally for access within other functions
- */
-
-const scales = {
-  x: d3.scaleBand(),
-  y: d3.scaleLinear(),
-};
-
-// we are going to hardcode the domains, so we can setup our scales now
-// that is one benefit of prototyping!
-// scales.x.range([0, width - margin.left - margin.right])
-//         .domain(validMonths)
-//         .paddingInner(0.05);
-//
-// scales.y.range([height - margin.top - margin.bottom, 0])
-//         .domain([0, maxHeight]);
-
 // load data and trigger draw
 d3.csv('mrc_table2_filtered.csv', convert)
   .then(draw);
-// d3.csv('mrc_table2_filtered.csv', function(error, data) {
-//
-// });
 
 // since we do not need the data for our domains, we can draw our axis/legends right away
 // drawAxis();
@@ -128,7 +99,6 @@ function draw(data) {
   console.log('loaded:', data.length, data[0]);
 
   drawCells(data);
-  // drawLabels(data);
 }
 
 /*
