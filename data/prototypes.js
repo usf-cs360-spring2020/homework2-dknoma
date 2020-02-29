@@ -31,7 +31,7 @@ const types = [1, 2, 3];
 const margin = {
   top: 30,
   bottom: 35,
-  left: 15,
+  left: 100,
   right: 15
 };
 
@@ -128,46 +128,51 @@ function drawCells(data) {
 
 
 // set svg size
-  svg.attr('width', size * cellN + padding)
-     .attr('height', size * cellN + padding);
+  svg.attr('width', size * cellN + padding + margin.left + margin.right)
+     .attr('height', size * cellN + padding + margin.top + margin.bottom);
 
-  plot.attr('transform', 'translate(' + padding + ', ' + padding / 2 + ')');
+  plot.attr('transform', 'translate(' + (padding * 3) + ', ' + padding / 2 + ')');
 
   const group = plot.append('g')
                     .attr('id', 'cells');
 
-  let xg = group.selectAll('.x.axis')
-                .data(measures)
+  group.selectAll('.x.axis')
+                .data(rev)
                 .enter()
                 .append('g')
                 .attr('class', 'x axis')
                 .attr('transform', (d, i) => 'translate(' + (cellN - i - 1) * size + ', 0)')
-                .each(function(d) {
+                .each(function(d, i) {
                   x.domain(domainByMeasures[d]);
                   d3.select(this)
                     .call(xAxis);
+
+                  console.log(i);
+                  plot.append('g')
+                      .append('text')
+                      .attr('x', (cellN - i - 1) * size + size / 2.5)
+                      .attr('y', size * 4 + padding * 1.2)
+                      .text(d);
                 });
 
-  xg.append('g')
-    .append('text')
-    .attr('x', size)
-    .attr('y', size)
-    .text(d => {
-      console.log(d);
-      return d
-    });
-
-
-  let yg = group.selectAll('.y.axis')
+  group.selectAll('.y.axis')
                 .data(measures)
                 .enter()
                 .append('g')
                 .attr('class', 'y axis')
                 .attr('transform', (d, i) => 'translate(0,' +  i * size + ')')
-                .each(function(d) {
+                .each(function(d, i) {
                   y.domain(domainByMeasures[d]);
                   d3.select(this)
                     .call(yAxis);
+
+                  plot.append('g')
+                      .append('text')
+                      .attr('class', 'vtext')
+                      .attr('x', (i + 1) * -size + size / 2.5)
+                      .attr('y', -30)
+                      .attr('transform', 'rotate(270)')
+                      .text(d);
                 });
 
   let cell = plot.selectAll('.cell')
@@ -178,10 +183,7 @@ function drawCells(data) {
                 .attr('transform', d => 'translate(' + (cellN - d.i - 1) * size + ',' + d.j * size + ')')
                 .each(doPlot);
 
-  cell.filter(d => {
-        // console.log(d);
-        return d.x === d.y
-      })
+  cell.filter(d => d.x === d.y)
       .append('text')
       .attr('x', padding)
       .attr('y', padding)
