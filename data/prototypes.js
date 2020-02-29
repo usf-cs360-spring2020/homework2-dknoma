@@ -31,7 +31,7 @@ const types = [1, 2, 3];
 const margin = {
   top: 30,
   bottom: 35,
-  left: 45,
+  left: 15,
   right: 15
 };
 
@@ -145,17 +145,15 @@ function drawCells(data) {
   let cellN = measures.length;
   let domainByMeasures = {};
 
-  measures.forEach(m => {
-    console.log('m');
-    console.log(m);
-    domainByMeasures[m] = d3.extent(data, d => d[m])
-  });
+  measures.forEach(m => domainByMeasures[m] = d3.extent(data, d => d[m]));
 
   xAxis.tickSize(size * cellN);
   yAxis.tickSize(-size * cellN);
 
   console.log(domainByMeasures);
+  console.log("measures");
   console.log(measures);
+  console.log("rev");
   console.log(rev);
 
 
@@ -163,17 +161,17 @@ function drawCells(data) {
   svg.attr('width', size * cellN + padding)
      .attr('height', size * cellN + padding);
 
-  plot.attr('transform', 'translate(' + padding + ',' + padding / 2 + ')');
+  plot.attr('transform', 'translate(' + padding + ', ' + padding / 2 + ')');
 
   const group = plot.append('g')
                     .attr('id', 'cells');
 
   group.selectAll('.x.axis')
-       .data(rev)
+       .data(measures)
        .enter()
        .append('g')
        .attr('class', 'x axis')
-       .attr('transform', (d, i) => 'translate(' + (cellN - i - 1) * size + ',0)')
+       .attr('transform', (d, i) => 'translate(' + (cellN - i - 1) * size + ', 0)')
        .each(function(d) {
          x.domain(domainByMeasures[d]);
          d3.select(this)
@@ -189,22 +187,26 @@ function drawCells(data) {
        .each(function(d) {
          y.domain(domainByMeasures[d]);
          d3.select(this)
-          .call(yAxis);
+           .call(yAxis);
        });
 
   let cell = svg.selectAll('.cell')
                 .data(cross(rev, measures))
-                .enter().append('g')
+                .enter()
+                .append('g')
                 .attr('class', 'cell')
                 .attr('transform', d => 'translate(' + (cellN - d.i - 1) * size + ',' + d.j * size + ')')
                 .each(doPlot);
 
-  // Titles for the diagonal.
-  cell.filter(function(d) { return d.i === d.j; }).append('text')
+  cell.filter(d => {
+        console.log(d);
+        return d.x === d.y
+      })
+      .append('text')
       .attr('x', padding)
       .attr('y', padding)
       .attr('dy', '.71em')
-      .text(function(d) { return d.x; });
+      .text(d => d.x);
 
   function doPlot(p) {
     let cell = d3.select(this);
@@ -230,8 +232,21 @@ function drawCells(data) {
 }
 
 function cross(a, b) {
-  var c = [], n = a.length, m = b.length, i, j;
-  for (i = -1; ++i < n;) for (j = -1; ++j < m;) c.push({x: a[i], i: i, y: b[j], j: j});
+  let c = [];
+  let n = a.length;
+  let m = b.length;
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < m; j++) {
+      c.push({
+        x: a[i],
+        i: i,
+        y: b[j],
+        j: j
+      });
+    }
+  }
+
   return c;
 }
 
