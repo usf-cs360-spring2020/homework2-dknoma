@@ -15,7 +15,7 @@
 const width = 960;
 const height = 500;
 const padding = 20;
-const size = 230;
+const size = (width - (4 + 1) * padding) / 4 + padding;
 
 const columns = {
   NAME: 'name',
@@ -123,12 +123,12 @@ function convert(row) {
 }
 
 function draw(data) {
-  console.log("data");
+  console.log('data');
   console.log(data);
   console.log('loaded:', data.length, data[0]);
 
   drawCells(data);
-  drawLabels(data);
+  // drawLabels(data);
 }
 
 /*
@@ -137,11 +137,16 @@ function draw(data) {
 function drawCells(data) {
   let measures = d3.keys(data[0])
                    .filter(d => d !== columns.NAME && d !== columns.TYPE);
+  let rev = [];
+  for(let i = measures.length - 1; i >= 0; i--) {
+    rev.push(measures[i]);
+  }
+
   let cellN = measures.length;
   let domainByMeasures = {};
 
   measures.forEach(m => {
-    console.log("m");
+    console.log('m');
     console.log(m);
     domainByMeasures[m] = d3.extent(data, d => d[m])
   });
@@ -150,55 +155,55 @@ function drawCells(data) {
   yAxis.tickSize(-size * cellN);
 
   console.log(domainByMeasures);
-  console.log(cellN);
-  console.log(size * cellN + padding);
+  console.log(measures);
+  console.log(rev);
 
 
 // set svg size
   svg.attr('width', size * cellN + padding)
      .attr('height', size * cellN + padding);
 
-  plot.attr("transform", "translate(" + padding + "," + padding / 2 + ")");
+  plot.attr('transform', 'translate(' + padding + ',' + padding / 2 + ')');
 
   const group = plot.append('g')
                     .attr('id', 'cells');
 
-  group.selectAll(".x.axis")
-       .data(measures)
+  group.selectAll('.x.axis')
+       .data(rev)
        .enter()
-       .append("g")
-       .attr("class", "x axis")
-       .attr("transform", (d, i) => "translate(" + (cellN - i - 1) * size + ",0)")
+       .append('g')
+       .attr('class', 'x axis')
+       .attr('transform', (d, i) => 'translate(' + (cellN - i - 1) * size + ',0)')
        .each(function(d) {
          x.domain(domainByMeasures[d]);
          d3.select(this)
            .call(xAxis);
        });
 
-  group.selectAll(".y.axis")
+  group.selectAll('.y.axis')
        .data(measures)
        .enter()
-       .append("g")
-       .attr("class", "y axis")
-       .attr("transform", (d, i) => "translate(0," +  i * size + ")")
+       .append('g')
+       .attr('class', 'y axis')
+       .attr('transform', (d, i) => 'translate(0,' +  i * size + ')')
        .each(function(d) {
          y.domain(domainByMeasures[d]);
          d3.select(this)
           .call(yAxis);
        });
 
-  let cell = svg.selectAll(".cell")
-                .data(cross(measures, measures))
-                .enter().append("g")
-                .attr("class", "cell")
-                .attr("transform", d => "translate(" + (cellN - d.i - 1) * size + "," + d.j * size + ")")
+  let cell = svg.selectAll('.cell')
+                .data(cross(rev, measures))
+                .enter().append('g')
+                .attr('class', 'cell')
+                .attr('transform', d => 'translate(' + (cellN - d.i - 1) * size + ',' + d.j * size + ')')
                 .each(doPlot);
 
   // Titles for the diagonal.
-  cell.filter(function(d) { return d.i === d.j; }).append("text")
-      .attr("x", padding)
-      .attr("y", padding)
-      .attr("dy", ".71em")
+  cell.filter(function(d) { return d.i === d.j; }).append('text')
+      .attr('x', padding)
+      .attr('y', padding)
+      .attr('dy', '.71em')
       .text(function(d) { return d.x; });
 
   function doPlot(p) {
@@ -207,20 +212,20 @@ function drawCells(data) {
     x.domain(domainByMeasures[p.x]);
     y.domain(domainByMeasures[p.y]);
 
-    cell.append("rect")
-        .attr("class", "frame")
-        .attr("x", padding / 2)
-        .attr("y", padding / 2)
-        .attr("width", size - padding)
-        .attr("height", size - padding);
+    cell.append('rect')
+        .attr('class', 'frame')
+        .attr('x', padding / 2)
+        .attr('y', padding / 2)
+        .attr('width', size - padding)
+        .attr('height', size - padding);
 
-    cell.selectAll("circle")
+    cell.selectAll('circle')
         .data(data)
-        .enter().append("circle")
-        .attr("cx", d => x(d[p.x]))
-        .attr("cy", d => y(d[p.y]))
-        .attr("r", 4)
-        .style("fill", d => color(d.type));
+        .enter().append('circle')
+        .attr('cx', d => x(d[p.x]))
+        .attr('cy', d => y(d[p.y]))
+        .attr('r', 4)
+        .style('fill', d => color(d.type));
   }
 }
 
@@ -273,123 +278,3 @@ function cross(a, b) {
 //                             .attr('height', legendHeight)
 //                             .attr('fill', blue);
 // }
-
-/*
- * draw labels for pre-selected bubbles
- */
-function drawLabels(data) {
-  // place the labels in their own group
-  const group = plot.append('g').attr('id', 'labels');
-
-  // create data join and enter selection
-  const labels = group.selectAll('text')
-    .data(data)
-    .enter()
-    .filter(d => d.label) // only keep values that we want to label
-    .append('text');
-
-  labels.text(d => d.name);
-
-  labels.attr('x', d => scales.x(d.income));
-  labels.attr('y', d => scales.y(d.mobility));
-
-  labels.attr('text-anchor', 'middle');
-  labels.attr('dy', d => -(scales.r(d.count) + 4));
-
-  // maybe we also want to make it more clear which circle is associated
-  // with the label above it---we will work with update selection here!
-  // plot.select('#bar')
-  //   .selectAll('rect')
-  //   .data(data)
-  //   .filter(d => d.label)
-  //   .style('stroke', 'black')
-  //   .style('stroke-width', 1);
-}
-
-/*
- * draw axis titles
- */
-function drawTitles() {
-  const xMiddle = margin.left + midpoint(scales.x.range());
-  const yMiddle = margin.top + midpoint(scales.y.range());
-
-  // test middle calculation
-  // svg.append('circle').attr('cx', xMiddle).attr('cy', yMiddle).attr('r', 5);
-
-  const xTitle = svg.append('text')
-    .attr('class', 'axis-title')
-    .text('2019');
-
-  xTitle.attr('x', xMiddle);
-  xTitle.attr('y', height);
-  xTitle.attr('dy', -4);
-  xTitle.attr('text-anchor', 'middle');
-
-  // it is easier to rotate text if you place it in a group first
-  // https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/rotate
-
-  const yGroup = svg.append('g');
-
-  // set the position by translating the group
-  yGroup.attr('transform', translate(4, yMiddle));
-
-  const yTitle = yGroup.append('text')
-                       .attr('class', 'axis-title')
-                       .text(columns.PASSENGER_COUNT);
-
-  // keep x, y at 0, 0 for rotation around the origin
-  yTitle.attr('x', 0);
-  yTitle.attr('y', 0);
-
-  yTitle.attr('dy', '1.75ex');
-  yTitle.attr('text-anchor', 'middle');
-  yTitle.attr('transform', 'rotate(-90)');
-}
-
-/*
- * create axis lines
- */
-function drawAxis() {
-  // place the xaxis and yaxis in their own groups
-  const xGroup = svg.append('g')
-                    .attr('id', 'x-axis')
-                    .attr('class', 'axis');
-  const yGroup = svg.append('g')
-                    .attr('id', 'y-axis')
-                    .attr('class', 'axis');
-
-  // create axis generators
-  const xAxis = d3.axisBottom(scales.x);
-  const yAxis = d3.axisLeft(scales.y);
-
-  // https://github.com/d3/d3-format#locale_formatPrefix
-  xAxis.ticks(9, 's')
-       .tickSizeOuter(0)
-       .tickSizeInner(0);
-  yAxis.ticks(5)
-       .tickSizeInner(-width + margin.left + margin.right)
-       .tickFormat(d => d3.format('.1s')(d))
-       .tickSizeOuter(0);
-
-  // shift x axis to correct location
-  xGroup.attr('transform', translate(margin.left, height - margin.bottom));
-  xGroup.call(xAxis);
-
-  // shift y axis to correct location
-  yGroup.attr('transform', translate(margin.left, margin.top))
-  yGroup.call(yAxis);
-}
-
-/*
- * calculates the midpoint of a range given as a 2 element array
- */
-function midpoint(range) {
-  return range[0] + (range[1] - range[0]) / 2.0;
-}
-
-/*
- * returns a translate string for the transform attribute
- */
-function translate(x, y) {
-  return 'translate(' + String(x) + ',' + String(y) + ')';
-}
