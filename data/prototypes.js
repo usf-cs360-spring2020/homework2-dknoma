@@ -182,7 +182,50 @@ function drawCells(data) {
          d3.select(this)
           .call(yAxis);
        });
+
+  let cell = svg.selectAll(".cell")
+                .data(cross(measures, measures))
+                .enter().append("g")
+                .attr("class", "cell")
+                .attr("transform", d => "translate(" + (cellN - d.i - 1) * size + "," + d.j * size + ")")
+                .each(doPlot);
+
+  // Titles for the diagonal.
+  cell.filter(function(d) { return d.i === d.j; }).append("text")
+      .attr("x", padding)
+      .attr("y", padding)
+      .attr("dy", ".71em")
+      .text(function(d) { return d.x; });
+
+  function doPlot(p) {
+    let cell = d3.select(this);
+
+    x.domain(domainByMeasures[p.x]);
+    y.domain(domainByMeasures[p.y]);
+
+    cell.append("rect")
+        .attr("class", "frame")
+        .attr("x", padding / 2)
+        .attr("y", padding / 2)
+        .attr("width", size - padding)
+        .attr("height", size - padding);
+
+    cell.selectAll("circle")
+        .data(data)
+        .enter().append("circle")
+        .attr("cx", function(d) { return x(d[p.x]); })
+        .attr("cy", function(d) { return y(d[p.y]); })
+        .attr("r", 4)
+        .style("fill", function(d) { return color(d.species); });
+  }
 }
+
+function cross(a, b) {
+  var c = [], n = a.length, m = b.length, i, j;
+  for (i = -1; ++i < n;) for (j = -1; ++j < m;) c.push({x: a[i], i: i, y: b[j], j: j});
+  return c;
+}
+
 //
 // // https://beta.observablehq.com/@tmcw/d3-scalesequential-continuous-color-legend-example
 // function drawColorLegend() {
