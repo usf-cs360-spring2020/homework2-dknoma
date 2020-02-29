@@ -18,7 +18,7 @@ const padding = 20;
 const size = 230;
 
 const columns = {
-  STATE: 'state',
+  NAME: 'name',
   COUNT: 'count',
   K_MEAN: 'k_mean',
   PAR_MEAN: 'par_mean',
@@ -34,28 +34,24 @@ const margin = {
 };
 
 const x = d3.scaleLinear()
-          .range([padding / 2, size - padding / 2]);
+            .range([padding / 2, size - padding / 2]);
 
 const y = d3.scaleLinear()
-          .range([size - padding / 2, padding / 2]);
+            .range([size - padding / 2, padding / 2]);
 
-var xAxis = d3.axisBottom()
-              .scale(x)
-              .ticks(4);
+const xAxis = d3.axisBottom()
+                .scale(x)
+                .ticks(4);
 
-var yAxis = d3.axisLeft()
-              .scale(y)
-              .ticks(4);
+const yAxis = d3.axisLeft()
+                .scale(y)
+                .ticks(4);
 
 const color = d3.scaleOrdinal(d3.schemeCategory10);
 
 // select svg
 const svg = d3.select('#scatter-plot');
 console.assert(svg.size() === 1);
-
-// set svg size
-svg.attr('width', width);
-svg.attr('height', height);
 
 // add plot region
 const plot = svg.append('g')
@@ -66,7 +62,7 @@ const plot = svg.append('g')
 // plot.append('rect').attr('width', 10).attr('height', 10);
 
 // transform region by margin
-plot.attr('transform', translate(margin.left, margin.top));
+// plot.attr('transform', translate(margin.left, margin.top));
 
 /*
  * setup scales with ranges and the domains we set from tableau
@@ -90,6 +86,9 @@ const scales = {
 // load data and trigger draw
 d3.csv('mrc_table2_filtered.csv', convert)
   .then(draw);
+// d3.csv('mrc_table2_filtered.csv', function(error, data) {
+//
+// });
 
 // since we do not need the data for our domains, we can draw our axis/legends right away
 // drawAxis();
@@ -102,14 +101,14 @@ d3.csv('mrc_table2_filtered.csv', convert)
 function convert(row) {
   let convert = {};
 
-  let state = row[columns.STATE];
+  let name = row[columns.NAME];
   let count = row[columns.COUNT];
   let kMean = row[columns.K_MEAN];
   let pMean = row[columns.PAR_MEAN];
   let female = row[columns.FEMALE];
   let type = row[columns.TYPE];
 
-  convert[columns.STATE] = state;
+  convert[columns.NAME] = name;
   convert[columns.TYPE] = parseInt(type);
   convert[columns.COUNT] = parseInt(count);
   convert[columns.K_MEAN] = parseFloat(kMean);
@@ -124,99 +123,109 @@ function draw(data) {
   console.log(data);
   console.log('loaded:', data.length, data[0]);
 
-  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions
-  // let internationalData = data.filter(row => row[columns.GEO_SUMMARY] === 'International');
-  // let domesticData = data.filter(row => row[columns.GEO_SUMMARY] === 'Domestic');
-  // console.log('filter - internationalData:', internationalData.length, internationalData[0]);
-  // console.log('filter - domesticData:', domesticData.length, domesticData[0]);
-
-
-  // drawBars(domesticData, internationalData);
+  drawCells(data);
   drawLabels(data);
 }
 
 /*
  * draw bars
  */
-function drawBars(domesticData, internationalData) {
-  // place all of the bars in their own group
+function drawCells(data) {
+  let measures = d3.keys(data[0])
+                   .filter(d => d !== columns.NAME && d !== columns.TYPE);
+  let cellN = measures.length;
+  let domainByMeasures = {};
+
+  measures.forEach(m => {
+    console.log("m");
+    console.log(m);
+    domainByMeasures[m] = d3.extent(data, d => d[m])
+  });
+
+  xAxis.tickSize(size * cellN);
+  yAxis.tickSize(-size * cellN);
+
+  console.log(domainByMeasures);
+  console.log(cellN);
+  console.log(size * cellN + padding);
+
+
+// set svg size
+  svg.attr('width', size * cellN + padding)
+     .attr('height', size * cellN + padding);
+
+  plot.attr("transform", "translate(" + padding + "," + padding / 2 + ")");
+
   const group = plot.append('g')
-                    .attr('id', 'bars');
+                    .attr('id', 'cells');
 
-  let domesticStartPoints = {};
+  group.selectAll(".x.axis")
+       .data(measures)
+       .enter()
+       .append("g")
+       .attr("class", "x axis")
+       .attr("transform", (d, i) => "translate(" + (cellN - i - 1) * size + ",0)")
+       .each(function(d) {
+         x.domain(domainByMeasures[d]);
+         d3.select(this)
+           .call(xAxis);
+       });
 
-  let domestic =  group.selectAll('rect')
-                       .data(domesticData)
-                       .enter()
-                       .append('rect')
-                       .attr('fill', d => stackColor(d[columns.GEO_SUMMARY]))
-                       .attr('x', d => scales.x(d[columns.ACTIVITY_PERIOD].str))
-                       .attr('y', d => {
-                         let point = scales.y(d[columns.PASSENGER_COUNT]);
-                         domesticStartPoints[d[columns.ACTIVITY_PERIOD].str] = point;
-                         return point;
-                       })
-                       .attr('width', scales.x.bandwidth())
-                       .attr('height', d => height - scales.y(d[columns.PASSENGER_COUNT]) - margin.bottom - margin.top);
-
-  let international =  plot.append('g')
-                           .attr('id', 'bars')
-                           .selectAll('rect')
-                           .data(internationalData)
-                           .enter()
-                           .append('rect')
-                           .attr('fill', d => stackColor(d[columns.GEO_SUMMARY]))
-                           .attr('x', d => scales.x(d[columns.ACTIVITY_PERIOD].str))
-                           .attr('y', d => {
-                             let delta = height - scales.y(d[columns.PASSENGER_COUNT]) - margin.bottom - margin.top;
-                             return domesticStartPoints[d[columns.ACTIVITY_PERIOD].str] - delta;
-                           })
-                           .attr('width', scales.x.bandwidth())
-                           .attr('height', d => height - scales.y(d[columns.PASSENGER_COUNT]) - margin.bottom - margin.top);
+  group.selectAll(".y.axis")
+       .data(measures)
+       .enter()
+       .append("g")
+       .attr("class", "y axis")
+       .attr("transform", (d, i) => "translate(0," +  i * size + ")")
+       .each(function(d) {
+         y.domain(domainByMeasures[d]);
+         d3.select(this)
+          .call(yAxis);
+       });
 }
-
-// https://beta.observablehq.com/@tmcw/d3-scalesequential-continuous-color-legend-example
-function drawColorLegend() {
-  const boxWidth = 20;
-  const legendWidth = 200;
-  const legendHeight = 20;
-
-  // place legend in its own group
-  const group = svg.append('g')
-                   .attr('id', 'color-legend');
-
-  // shift legend to appropriate position
-  group.attr('transform', translate(width - margin.right - legendWidth, 0));
-
-  const title = group.append('text')
-                     .attr('class', 'axis-title')
-                     .text('GEO Summary')
-                     .attr('dy', 12);
-
-  let internationalText = group.append('text')
-                               .attr('class', 'text')
-                               .text('International')
-                               .attr('dy', 32).attr('dx', -60);
-
-  let domesticText = group.append('text')
-                          .attr('class', 'text')
-                          .text('Domestic')
-                          .attr('dy', 32).attr('dx', 80);
-
-  const internationalBox = group.append('rect')
-                                .attr('x', -100)
-                                .attr('y', 12 + 6)
-                                .attr('width', boxWidth)
-                                .attr('height', legendHeight)
-                                .attr('fill', orange);
-
-  const domesticBox = group.append('rect')
-                            .attr('x', 40)
-                            .attr('y', 12 + 6)
-                            .attr('width', boxWidth)
-                            .attr('height', legendHeight)
-                            .attr('fill', blue);
-}
+//
+// // https://beta.observablehq.com/@tmcw/d3-scalesequential-continuous-color-legend-example
+// function drawColorLegend() {
+//   const boxWidth = 20;
+//   const legendWidth = 200;
+//   const legendHeight = 20;
+//
+//   // place legend in its own group
+//   const group = svg.append('g')
+//                    .attr('id', 'color-legend');
+//
+//   // shift legend to appropriate position
+//   group.attr('transform', translate(width - margin.right - legendWidth, 0));
+//
+//   const title = group.append('text')
+//                      .attr('class', 'axis-title')
+//                      .text('GEO Summary')
+//                      .attr('dy', 12);
+//
+//   let internationalText = group.append('text')
+//                                .attr('class', 'text')
+//                                .text('International')
+//                                .attr('dy', 32).attr('dx', -60);
+//
+//   let domesticText = group.append('text')
+//                           .attr('class', 'text')
+//                           .text('Domestic')
+//                           .attr('dy', 32).attr('dx', 80);
+//
+//   const internationalBox = group.append('rect')
+//                                 .attr('x', -100)
+//                                 .attr('y', 12 + 6)
+//                                 .attr('width', boxWidth)
+//                                 .attr('height', legendHeight)
+//                                 .attr('fill', orange);
+//
+//   const domesticBox = group.append('rect')
+//                             .attr('x', 40)
+//                             .attr('y', 12 + 6)
+//                             .attr('width', boxWidth)
+//                             .attr('height', legendHeight)
+//                             .attr('fill', blue);
+// }
 
 /*
  * draw labels for pre-selected bubbles
